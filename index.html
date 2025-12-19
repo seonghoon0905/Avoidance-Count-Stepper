@@ -85,6 +85,69 @@
         const VolumeIcon = ({ size = 20, ...props }) => (
             <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>
         );
+        const GlobeIcon = ({ size = 20, ...props }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        );
+
+        // --- 번역 데이터 ---
+        const translations = {
+            ko: {
+                title: "Avoidance Count Stepper",
+                loadMusic: "음악 불러오기",
+                noFile: "파일을 선택해주세요",
+                speed: "속도 조절",
+                precision: "정밀",
+                slow: "느리게",
+                normal: "정상",
+                currentFrame: "Current Frame",
+                addMarker: "마커 추가",
+                patternList: "Pattern List",
+                sort: "정렬",
+                copyGML: "GML Array 복사",
+                emptyList: "재생 중 원하는 위치에서",
+                emptyListBold1: "[마커 추가]",
+                emptyList2: "버튼이나",
+                emptyListBold2: "[M]",
+                emptyList3: "키를 누르세요.",
+                frameEdit: "Frame (Edit)",
+                labelComment: "Label (Comment)",
+                actions: "Actions",
+                placeholder: "패턴 설명 입력...",
+                jump: "이동",
+                delete: "삭제",
+                copySuccess: "배열이 복사되었습니다:\n\n",
+                guide: "방향키 좌/우: 1프레임 단위 이동",
+                volume: "볼륨"
+            },
+            en: {
+                title: "Avoidance Count Stepper",
+                loadMusic: "Load Music",
+                noFile: "No file selected",
+                speed: "Playback Speed",
+                precision: "Precision",
+                slow: "Slow",
+                normal: "Normal",
+                currentFrame: "Current Frame",
+                addMarker: "Add Marker",
+                patternList: "Pattern List",
+                sort: "Sort",
+                copyGML: "Copy GML Array",
+                emptyList: "Press",
+                emptyListBold1: "[Add Marker]",
+                emptyList2: "button or",
+                emptyListBold2: "[M]",
+                emptyList3: "key to start.",
+                frameEdit: "Frame (Edit)",
+                labelComment: "Label (Comment)",
+                actions: "Actions",
+                placeholder: "Enter description...",
+                jump: "Jump",
+                delete: "Delete",
+                copySuccess: "Array copied to clipboard:\n\n",
+                guide: "Arrow L/R: Move 1 frame",
+                volume: "Volume"
+            }
+        };
 
         const AudioAnalyzer = () => {
             const [wavesurfer, setWavesurfer] = useState(null);
@@ -95,15 +158,23 @@
             const [fps, setFps] = useState(50); 
             const [markers, setMarkers] = useState([]);
             const [playbackRate, setPlaybackRate] = useState(1);
-            const [volume, setVolume] = useState(100); // 볼륨 상태 추가 (0-200)
-            const [fileName, setFileName] = useState("파일을 선택해주세요");
+            const [volume, setVolume] = useState(100); 
+            const [fileName, setFileName] = useState(null); // 초기값 null로 변경 (번역 위해)
             const [isAudioLoaded, setIsAudioLoaded] = useState(false);
+            const [language, setLanguage] = useState('ko'); // 언어 상태 추가
             
             const dragItem = useRef();
             const dragOverItem = useRef();
             
             const waveformRef = useRef(null);
             const timelineRef = useRef(null);
+
+            // 현재 언어팩 선택
+            const t = translations[language];
+
+            const toggleLanguage = () => {
+                setLanguage(prev => prev === 'ko' ? 'en' : 'ko');
+            };
 
             const updateTime = useCallback((ws) => {
                 if (ws) {
@@ -152,7 +223,7 @@
                         wsInstance.on('ready', () => {
                             setDuration(wsInstance.getDuration());
                             setIsAudioLoaded(true);
-                            wsInstance.setVolume(1); // 초기 볼륨 100% (1.0)
+                            wsInstance.setVolume(1); 
                         });
                         
                         const handleInteraction = () => updateTime(wsInstance);
@@ -198,10 +269,8 @@
                 if (wavesurfer) wavesurfer.setPlaybackRate(playbackRate);
             }, [playbackRate, wavesurfer]);
 
-            // 볼륨 변경 이펙트
             useEffect(() => {
                 if (wavesurfer) {
-                    // UI값 0-200을 WaveSurfer 0.0-2.0으로 변환
                     wavesurfer.setVolume(volume / 100);
                 }
             }, [volume, wavesurfer]);
@@ -256,7 +325,7 @@
                 gmlString += "]";
 
                 navigator.clipboard.writeText(gmlString).then(() => {
-                    alert("배열이 복사되었습니다:\n\n" + gmlString);
+                    alert(t.copySuccess + gmlString);
                 });
             };
 
@@ -353,19 +422,28 @@
                         <div className="flex justify-between items-center mb-4">
                             <h1 className="text-xl font-bold flex items-center gap-2 text-green-400">
                                 <GamepadIcon size={28} />
-                                Avoidance Count Stepper
+                                {t.title}
                             </h1>
-                            <div className="flex items-center gap-4 bg-gray-700 px-4 py-2 rounded-lg">
-                                <div className="flex items-center gap-2">
-                                    <ClockIcon size={16} className="text-gray-400" />
-                                    <span className="text-sm font-semibold">ROOM SPEED (FPS):</span>
-                                    <input 
-                                        type="number" 
-                                        value={fps} 
-                                        onChange={(e) => setFps(Number(e.target.value))}
-                                        className="w-16 bg-gray-600 border border-gray-500 rounded px-2 py-1 text-center focus:outline-none focus:border-green-500"
-                                    />
+                            <div className="flex gap-4">
+                                <div className="flex items-center gap-4 bg-gray-700 px-4 py-2 rounded-lg">
+                                    <div className="flex items-center gap-2">
+                                        <ClockIcon size={16} className="text-gray-400" />
+                                        <span className="text-sm font-semibold">ROOM SPEED (FPS):</span>
+                                        <input 
+                                            type="number" 
+                                            value={fps} 
+                                            onChange={(e) => setFps(Number(e.target.value))}
+                                            className="w-16 bg-gray-600 border border-gray-500 rounded px-2 py-1 text-center focus:outline-none focus:border-green-500"
+                                        />
+                                    </div>
                                 </div>
+                                <button 
+                                    onClick={toggleLanguage}
+                                    className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-bold text-gray-200 transition"
+                                >
+                                    <GlobeIcon size={16} />
+                                    {language === 'ko' ? 'KO' : 'EN'}
+                                </button>
                             </div>
                         </div>
 
@@ -373,10 +451,10 @@
                             <div className="flex items-center gap-3">
                                 <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded cursor-pointer transition">
                                     <UploadIcon size={18} />
-                                    <span>음악 불러오기</span>
+                                    <span>{t.loadMusic}</span>
                                     <input type="file" accept="audio/*" onChange={handleFileUpload} className="hidden" />
                                 </label>
-                                <div className="text-sm text-gray-400 truncate max-w-[200px]">{fileName}</div>
+                                <div className="text-sm text-gray-400 truncate max-w-[200px]">{fileName || t.noFile}</div>
                                 
                                 <div className="h-8 w-[1px] bg-gray-600 mx-2"></div>
 
@@ -389,27 +467,27 @@
                                 </button>
                                 
                                 <div className="flex flex-col text-xs text-gray-400 ml-2">
-                                    <span>속도 조절</span>
+                                    <span>{t.speed}</span>
                                     <select 
                                         value={playbackRate} 
                                         onChange={(e) => setPlaybackRate(Number(e.target.value))}
                                         className="bg-gray-700 border border-gray-600 rounded mt-1"
                                     >
-                                        <option value={0.25}>0.25x (정밀)</option>
-                                        <option value={0.5}>0.5x (느리게)</option>
-                                        <option value={1}>1.0x (정상)</option>
+                                        <option value={0.25}>0.25x ({t.precision})</option>
+                                        <option value={0.5}>0.5x ({t.slow})</option>
+                                        <option value={1}>1.0x ({t.normal})</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div className="flex flex-col items-center bg-black px-8 py-2 rounded border border-green-900 shadow-lg ring-1 ring-green-900/50">
-                                <span className="text-xs text-gray-500 uppercase tracking-wider">Current Frame</span>
+                                <span className="text-xs text-gray-500 uppercase tracking-wider">{t.currentFrame}</span>
                                 <span className="text-3xl font-mono text-green-400 font-bold drop-shadow-md">{currentFrame}</span>
                                 <span className="text-xs text-gray-500">{formatTime(currentTime)} / {formatTime(duration)}</span>
                             </div>
 
                             <div className="flex items-center gap-3">
-                                {/* 볼륨 컨트롤 추가 */}
+                                {/* 볼륨 컨트롤 */}
                                 <div className="flex items-center gap-2 mr-4 group relative">
                                     <VolumeIcon size={18} className="text-gray-400 group-hover:text-green-400 transition" />
                                     <input 
@@ -419,7 +497,7 @@
                                         value={volume} 
                                         onChange={(e) => setVolume(Number(e.target.value))}
                                         className="w-20 accent-green-500 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
-                                        title={`볼륨: ${volume}%`}
+                                        title={`${t.volume}: ${volume}%`}
                                     />
                                     <span className="text-xs text-gray-500 w-8 text-right">{volume}%</span>
                                 </div>
@@ -439,10 +517,10 @@
                                 <button 
                                     onClick={addMarker}
                                     className="ml-4 flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded transition shadow-md"
-                                    title="단축키: M"
+                                    title="Shortcut: M"
                                 >
                                     <PlusIcon size={18} className="text-green-400" />
-                                    <span>마커 추가</span>
+                                    <span>{t.addMarker}</span>
                                 </button>
                             </div>
                         </div>
@@ -459,8 +537,8 @@
                         {!isAudioLoaded && (
                             <div className="absolute inset-0 flex items-center justify-center text-gray-600 flex-col gap-4">
                                 <GamepadIcon size={48} className="opacity-20" />
-                                <p>음악 파일을 불러오면 파형이 표시됩니다.</p>
-                                <p className="text-sm opacity-50">방향키 좌/우: 1프레임 단위 이동</p>
+                                <p>{language === 'ko' ? '음악 파일을 불러오면 파형이 표시됩니다.' : 'Load an audio file to see the waveform.'}</p>
+                                <p className="text-sm opacity-50">{t.guide}</p>
                             </div>
                         )}
                     </div>
@@ -469,23 +547,23 @@
                         <div className="p-3 bg-gray-800 border-b border-gray-700 flex justify-between items-center shadow-md z-10">
                             <h3 className="font-semibold text-gray-300 flex items-center gap-2">
                                 <SettingsIcon size={16} />
-                                Pattern List ({markers.length})
+                                {t.patternList} ({markers.length})
                             </h3>
                             <div className="flex gap-2">
                                 <button
                                     onClick={sortByFrame}
                                     className="flex items-center gap-2 px-3 py-1 bg-gray-700 hover:bg-gray-600 text-sm rounded text-gray-200 transition"
-                                    title="프레임 오름차순 정렬"
+                                    title={t.sort}
                                 >
                                     <SortIcon size={14} />
-                                    정렬
+                                    {t.sort}
                                 </button>
                                 <button 
                                     onClick={exportMarkers}
                                     className="flex items-center gap-2 px-3 py-1 bg-green-700 hover:bg-green-600 text-sm rounded text-white transition shadow-sm"
                                 >
                                     <DownloadIcon size={14} />
-                                    GML Array 복사
+                                    {t.copyGML}
                                 </button>
                             </div>
                         </div>
@@ -493,7 +571,9 @@
                         <div className="flex-1 overflow-y-auto p-2">
                             {markers.length === 0 ? (
                                 <div className="text-center text-gray-500 py-8 text-sm flex flex-col items-center gap-2">
-                                    <span>재생 중 원하는 위치에서 <b>[마커 추가]</b> 버튼이나 <b>[M]</b> 키를 누르세요.</span>
+                                    <span>
+                                        {t.emptyList} <b>{t.emptyListBold1}</b> {t.emptyList2} <b>{t.emptyListBold2}</b> {t.emptyList3}
+                                    </span>
                                 </div>
                             ) : (
                                 <table className="w-full text-left text-sm text-gray-300">
@@ -501,9 +581,9 @@
                                         <tr>
                                             <th className="p-2 w-10"></th>
                                             <th className="p-2 w-16">#</th>
-                                            <th className="p-2 w-32">Frame (Edit)</th>
-                                            <th className="p-2">Label (Comment)</th>
-                                            <th className="p-2 text-right">Actions</th>
+                                            <th className="p-2 w-32">{t.frameEdit}</th>
+                                            <th className="p-2">{t.labelComment}</th>
+                                            <th className="p-2 text-right">{t.actions}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-700">
@@ -538,14 +618,14 @@
                                                             setMarkers(newMarkers);
                                                         }}
                                                         className="bg-transparent border-b border-transparent focus:border-green-500 outline-none text-gray-200 w-full placeholder-gray-600"
-                                                        placeholder="패턴 설명 입력..."
+                                                        placeholder={t.placeholder}
                                                     />
                                                 </td>
                                                 <td className="p-2 text-right">
-                                                    <button onClick={() => jumpToMarker(marker.time)} className="p-1 hover:text-green-400 mr-2 transition" title="이동">
+                                                    <button onClick={() => jumpToMarker(marker.time)} className="p-1 hover:text-green-400 mr-2 transition" title={t.jump}>
                                                         <PlayIcon size={14} />
                                                     </button>
-                                                    <button onClick={() => deleteMarker(marker.id)} className="p-1 hover:text-red-400 transition" title="삭제">
+                                                    <button onClick={() => deleteMarker(marker.id)} className="p-1 hover:text-red-400 transition" title={t.delete}>
                                                         <Trash2Icon size={14} />
                                                     </button>
                                                 </td>

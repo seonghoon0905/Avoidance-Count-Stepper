@@ -116,8 +116,9 @@
                 jump: "이동",
                 delete: "삭제",
                 copySuccess: "배열이 복사되었습니다:\n\n",
-                guide: "방향키 좌/우: 1프레임 단위 이동",
-                volume: "볼륨"
+                guide: "방향키 좌/우: 1프레임 단위 이동 / 파일을 드래그하여 로드",
+                volume: "볼륨",
+                dropHere: "파일을 여기에 놓으세요"
             },
             en: {
                 title: "Avoidance Count Stepper",
@@ -144,8 +145,9 @@
                 jump: "Jump",
                 delete: "Delete",
                 copySuccess: "Array copied to clipboard:\n\n",
-                guide: "Arrow L/R: Move 1 frame",
-                volume: "Volume"
+                guide: "Arrow L/R: Move 1 frame / Drag & Drop to load",
+                volume: "Volume",
+                dropHere: "Drop file here"
             }
         };
 
@@ -159,9 +161,10 @@
             const [markers, setMarkers] = useState([]);
             const [playbackRate, setPlaybackRate] = useState(1);
             const [volume, setVolume] = useState(100); 
-            const [fileName, setFileName] = useState(null); // 초기값 null로 변경 (번역 위해)
+            const [fileName, setFileName] = useState(null);
             const [isAudioLoaded, setIsAudioLoaded] = useState(false);
-            const [language, setLanguage] = useState('ko'); // 언어 상태 추가
+            const [language, setLanguage] = useState('ko');
+            const [isDragging, setIsDragging] = useState(false); // 드래그 상태 추가
             
             const dragItem = useRef();
             const dragOverItem = useRef();
@@ -275,8 +278,8 @@
                 }
             }, [volume, wavesurfer]);
 
-            const handleFileUpload = (e) => {
-                const file = e.target.files[0];
+            // 파일 처리 공통 함수
+            const processFile = (file) => {
                 if (file && wavesurfer) {
                     setIsAudioLoaded(false);
                     setFileName(file.name);
@@ -284,6 +287,34 @@
                     wavesurfer.load(objectUrl);
                     setMarkers([]); 
                     setIsPlaying(false);
+                }
+            };
+
+            const handleFileUpload = (e) => {
+                const file = e.target.files[0];
+                processFile(file);
+            };
+
+            // 드래그 앤 드롭 핸들러
+            const handleDragOver = (e) => {
+                e.preventDefault();
+                setIsDragging(true);
+            };
+
+            const handleDragLeave = (e) => {
+                e.preventDefault();
+                // 자식 요소로 들어갈 때 깜빡임 방지 (relatedTarget 체크)
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                    setIsDragging(false);
+                }
+            };
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('audio/')) {
+                    processFile(file);
                 }
             };
 
@@ -417,11 +448,22 @@
             }, [wavesurfer, isPlaying, currentTime, fps, markers, isAudioLoaded, duration, updateTime]);
 
             return (
-                <div className="flex flex-col h-screen bg-gray-900 text-gray-100 font-sans overflow-hidden">
+                <div 
+                    className="flex flex-col h-screen bg-gray-900 text-gray-100 font-sans overflow-hidden relative"
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                >
+                    {/* 드래그 오버레이 */}
+                    {isDragging && (
+                        <div className="absolute inset-0 bg-black/80 z-50 flex items-center justify-center border-4 border-dashed border-green-500 m-4 rounded-xl pointer-events-none">
+                            <p className="text-3xl font-bold text-green-500 animate-pulse">{t.dropHere}</p>
+                        </div>
+                    )}
+
                     <div className="p-4 bg-gray-800 border-b border-gray-700 shadow-lg z-10">
                         <div className="flex justify-between items-center mb-4">
                             <h1 className="text-xl font-bold flex items-center gap-2 text-green-400">
-                                <GamepadIcon size={28} />
                                 {t.title}
                             </h1>
                             <div className="flex gap-4">
